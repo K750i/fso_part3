@@ -29,4 +29,15 @@ app.get('/api/persons', (req, res) => {
   res.json(persons);
 });
 
+app.use('/info', (req, res, next) => {
+  req.timeReceived = new Date();
+  next();
+});
+
+app.get('/info', (req, res) => {
+  let info = `<p>Phonebook has information for ${persons.length} people.<p>`;
+  info += `<p>${req.timeReceived}</p>`;
+  res.send(info);
+});
+
 app.listen(PORT, () => console.log(`Server started and listening on port ${PORT}`));
