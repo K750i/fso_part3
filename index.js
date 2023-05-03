@@ -40,6 +40,37 @@ app.get('/api/persons/:id', (req, res) => {
   res.json(person);
 });
 
+app.use('/api/persons', express.json());
+
+app.post('/api/persons', (req, res) => {
+  if (!(req.body.name && req.body.number)) {
+    return res.status(400).json({
+      error: 'Name and Number cannot be empty'
+    });
+  }
+
+  const personExist = persons.find(person => {
+    return person.name.toLowerCase() === req.body.name.toLowerCase();
+  });
+
+  if (personExist) {
+    return res.status(400).json({
+      error: 'This person is already in the phonebook.'
+    });
+  }
+
+  const generateId = () => Math.floor(Math.random() * 1000);
+  const { name, number } = req.body;
+  const newPerson = {
+    id: generateId(),
+    name,
+    number,
+  };
+
+  persons = [...persons, newPerson];
+  res.json(newPerson);
+});
+
 app.delete('/api/persons/:id', (req, res) => {
   const id = req.params.id;
 
