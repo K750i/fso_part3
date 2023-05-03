@@ -1,6 +1,7 @@
 const express = require('express');
+const morgan = require('morgan');
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 let persons = [
   {
@@ -24,6 +25,19 @@ let persons = [
     "number": "39-23-6423122"
   }
 ];
+
+app.use(morgan(function (tokens, req, res) {
+  const data = JSON.stringify(req.body) || '';
+
+  return [
+    tokens.method(req, res),
+    tokens.url(req, res),
+    tokens.status(req, res),
+    tokens.res(req, res, 'content-length'), '-',
+    tokens['response-time'](req, res), 'ms',
+    data
+  ].join(' ');
+}));
 
 app.get('/api/persons', (req, res) => {
   res.json(persons);
