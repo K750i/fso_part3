@@ -26,6 +26,8 @@ let persons = [
   }
 ];
 
+app.use(express.static('dist'));
+
 app.use(morgan(function (tokens, req, res) {
   const data = JSON.stringify(req.body) || '';
 
