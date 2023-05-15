@@ -25,10 +25,9 @@ app.get('/api/persons', (req, res) => {
   });
 });
 
-app.get('/api/persons/:id', (req, res) => {
-  const id = req.params.id;
+app.get('/api/persons/:id', (req, res, next) => {
   People
-    .findById(id)
+    .findById(req.params.id)
     .then(result => {
       if (result) {
         res.json(result);
@@ -36,28 +35,37 @@ app.get('/api/persons/:id', (req, res) => {
         res.status(404).end();
       }
     })
-    .catch(err => console.log(err.reason));
+    .catch(next);
 });
 
 app.use('/api/persons', express.json());
 
 app.post('/api/persons', (req, res) => {
-  if (!(req.body.name && req.body.number)) {
-    return res.status(400).json({
-      error: 'Name and Number cannot be empty'
-    });
-  }
+  const { name, number } = req.body;
 
   People
-    .create({ name: req.body.name, number: req.body.number })
+    .create({ name, number })
     .then(result => res.json(result));
 });
 
-app.delete('/api/persons/:id', (req, res) => {
+app.put('/api/persons/:id', (req, res, next) => {
+  const { name, number } = req.body;
+
+  People
+    .findByIdAndUpdate(req.params.id, { name, number }, { new: true })
+    .then(updatedPerson => {
+      res.json(updatedPerson);
+    })
+    .catch(next);
+});
+
+app.delete('/api/persons/:id', (req, res, next) => {
   const id = req.params.id;
 
-  persons = persons.filter(person => person.id != id);
-  res.status(204).end();
+  People
+    .deleteOne({ _id: id })
+    .then(result => res.json(result))
+    .catch(next);
 });
 
 app.use('/info', (req, res, next) => {
@@ -66,9 +74,22 @@ app.use('/info', (req, res, next) => {
 });
 
 app.get('/info', (req, res) => {
-  let info = `<p>Phonebook has information for ${persons.length} people.<p>`;
-  info += `<p>${req.timeReceived}</p>`;
-  res.send(info);
+  People
+    .estimatedDocumentCount()
+    .then(result => {
+      let info = `<p>Phonebook has information for ${result} people.<p>`;
+      info += `<p>${req.timeReceived}</p>`;
+      res.send(info);
+    });
+});
+
+app.use((err, req, res, next) => {
+  console.log(JSON.stringify(err, null, 2));
+
+  if (err.name === 'CastError') {
+    return res.json({ error: 'INVALID ID: unable to cast to ObjectId' });
+  }
+  next(err);
 });
 
 app.listen(PORT, () => console.log(`Server started and listening on port ${PORT}`));
