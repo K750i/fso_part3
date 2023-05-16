@@ -40,19 +40,24 @@ app.get('/api/persons/:id', (req, res, next) => {
 
 app.use('/api/persons', express.json());
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   const { name, number } = req.body;
 
   People
     .create({ name, number })
-    .then(result => res.json(result));
+    .then(result => res.json(result))
+    .catch(next);
 });
 
 app.put('/api/persons/:id', (req, res, next) => {
   const { name, number } = req.body;
 
   People
-    .findByIdAndUpdate(req.params.id, { name, number }, { new: true })
+    .findByIdAndUpdate(
+      req.params.id,
+      { name, number },
+      { new: true, runValidators: true, context: 'query' }
+    )
     .then(updatedPerson => {
       res.json(updatedPerson);
     })
@@ -87,8 +92,13 @@ app.use((err, req, res, next) => {
   console.log(JSON.stringify(err, null, 2));
 
   if (err.name === 'CastError') {
-    return res.json({ error: 'INVALID ID: unable to cast to ObjectId' });
+    return res.status(400).json({ error: 'INVALID ID: unable to cast to ObjectId' });
   }
+
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ error: err.message });
+  }
+
   next(err);
 });
 

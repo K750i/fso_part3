@@ -9,8 +9,18 @@ mongoose.connection.on(
 
 const peopleSchema = new mongoose.Schema(
   {
-    name: String,
-    number: String,
+    name: {
+      type: String,
+      minLength: 3,
+      required: true
+    },
+    number: {
+      type: String,
+      minLength: 8,
+      validate: {
+        validator: v => /^\d{2,3}-\d{6,}$/.test(v)
+      }
+    },
   },
   {
     strictQuery: false,
